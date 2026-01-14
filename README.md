@@ -80,3 +80,5 @@ Sigue estos pasos para clonar y ejecutar el sistema en tu máquina:
 
 
 <img width="1920" height="1002" alt="image" src="https://github.com/user-attachments/assets/bc3efff3-9501-4f68-a565-76a4fd801e22" />
+
+<img width="1920" height="1002" alt="dasboard" src="https://github.com/user-attachments/assets/38a24c4f-1e6a-4829-8b3d-59853094280e" />
