@@ -76,3 +76,7 @@ Sigue estos pasos para clonar y ejecutar el sistema en tu máquina:
 ├── logo_de_albert.png      # Activos de marca personal
 ├── reconstruccion_vzla.db  # Base de datos (Autogenerada)
 └── README.md               # Documentación
+
+
+
+<img width="1920" height="1002" alt="image" src="https://github.com/user-attachments/assets/bc3efff3-9501-4f68-a565-76a4fd801e22" />
