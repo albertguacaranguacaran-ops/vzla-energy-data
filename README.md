@@ -1,5 +1,3 @@
-# vzla-energy-data
-Dashboard interactivo para la gestión de logística y exportación petrolera en Venezuela usando Python y SQL
 # ⚓ Sistema de Inteligencia Portuaria & Logística
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
@@ -27,7 +25,7 @@ Demostrar la convergencia entre el conocimiento experto en **Logística Aduanera
 * **📊 Dashboard Ejecutivo Interactivo:** Visualización de KPIs en tiempo real (Volumen Total, Valoración Financiera, Flota Activa).
 * **🌍 Análisis Geoespacial:** Distribución de carga por destino internacional (China, India, EE.UU., etc.) mediante gráficos interactivos de Plotly.
 * **🛡️ UI/UX de Alto Contraste:** Interfaz optimizada con CSS personalizado que garantiza legibilidad perfecta (Fondo Blanco / Texto Negro) independientemente de la configuración del dispositivo del usuario.
-* **📄 Generación de Reportes PDF:** Módulo automatizado con `FPDF` que genera documentos formales de auditoría, sanboxeando caracteres especiales y adjuntando marca corporativa.
+* **📄 Generación de Reportes PDF:** Módulo automatizado con `FPDF` que genera documentos formales de auditoría, procesando caracteres especiales y adjuntando marca corporativa.
 * **💾 Gestión de Datos Autónoma:** Sistema de autogeneración de base de datos SQLite. Si no detecta la DB, la crea y puebla con data semilla automáticamente (Ideal para portabilidad).
 * **🔍 Filtros Operativos:** Segmentación dinámica de la data por destino o estatus aduanero.
 
@@ -48,12 +46,12 @@ Demostrar la convergencia entre el conocimiento experto en **Logística Aduanera
 
 ## 💻 Instalación y Ejecución Local
 
-Sigue estos pasos para correr el sistema en tu máquina:
+Sigue estos pasos para clonar y ejecutar el sistema en tu máquina:
 
 1.  **Clonar el repositorio:**
     ```bash
-    git clone [https://github.com/TU_USUARIO/nombre-del-repo.git](https://github.com/TU_USUARIO/nombre-del-repo.git)
-    cd nombre-del-repo
+    git clone [https://github.com/albertguacaranguacaran-ops/vzla-energy-data.git](https://github.com/albertguacaranguacaran-ops/vzla-energy-data.git)
+    cd vzla-energy-data
     ```
 
 2.  **Instalar dependencias:**
