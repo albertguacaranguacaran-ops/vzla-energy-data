@@ -4,47 +4,44 @@ import pandas as pd
 import plotly.express as px
 from PIL import Image
 
-# 1. CONFIGURACIÓN Y FORZADO DE TEMA CLARO
+# 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Terminal Logística - Albert Guacaran", layout="wide")
 
-# CSS para asegurar visibilidad total (Letras oscuras sobre fondo blanco)
+# 2. EL "SUPER CSS" PARA ARREGLAR VISIBILIDAD (Fondo blanco, Letras Negras)
 st.markdown("""
     <style>
-    /* Fondo de la aplicación */
+    /* Forzar fondo blanco en toda la app */
     .stApp { background-color: #FFFFFF !important; }
     
-    /* Forzar color de TODO el texto base a gris muy oscuro/negro */
-    .stApp, .stMarkdown, p, span, label { color: #1F2937 !important; }
+    /* Forzar que TODO el texto sea NEGRO profundo */
+    .stApp, .stMarkdown, p, span, label, .stMetric, div { color: #000000 !important; }
     
-    /* Títulos principales en azul marino */
-    h1, h2, h3 { color: #1E3A8A !important; font-family: 'Inter', sans-serif; }
+    /* Forzar títulos a azul marino muy oscuro */
+    h1, h2, h3, h4 { color: #001f3f !important; font-family: 'Arial', sans-serif; font-weight: bold; }
     
-    /* Métricas (Números grandes) */
-    [data-testid="stMetricValue"] { color: #1E3A8A !important; font-weight: bold; font-size: 32px; }
-    [data-testid="stMetricLabel"] { color: #4B5563 !important; font-size: 16px; }
+    /* Estilo para las métricas (Números grandes) */
+    [data-testid="stMetricValue"] { color: #000000 !important; font-weight: 800 !important; font-size: 35px !important; }
+    [data-testid="stMetricLabel"] { color: #333333 !important; font-weight: bold !important; }
     
-    /* Estilo para la tabla de datos */
-    .stDataFrame { border: 1px solid #E5E7EB; background-color: #FFFFFF; }
-    
-    /* Línea divisoria */
-    hr { border: 0; border-top: 1px solid #E5E7EB; }
+    /* Quitar el fondo negro de los gráficos de Plotly que se ve en tu imagen */
+    .js-plotly-plot .plotly .main-svg { background: white !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. CARGA DE LOGO (Asegúrate de que el nombre coincida con tu archivo en GitHub)
+# 3. CARGA DE LOGO
 try:
-    # Cambia 'nombre_de_tu_logo.png' por el nombre real que subiste
+    # Asegúrate de que el nombre coincida con tu archivo subido a GitHub
     logo = Image.open('logo.png') 
-    st.image(logo, width=180)
+    st.image(logo, width=200)
 except:
-    st.info("💡 Para mostrar tu logo, súbelo a GitHub con el nombre 'logo.png'")
+    st.info("💡 Sube tu logo como 'logo.png' en GitHub para que aparezca aquí.")
 
-# 3. ENCABEZADO PROFESIONAL
-st.title("🏛️ Terminal Virtual de Exportación de Hidrocarburos")
+# 4. TÍTULOS VISIBLES
+st.title("🏛️ Sistema de Inteligencia Portuaria")
 st.markdown(f"**Consultor Senior Responsable:** Lic. Albert Guacaran | *Comercio Exterior & Data Analytics*")
 st.write("---")
 
-# 4. FUNCIÓN DE DATOS
+# 5. CARGA DE DATOS
 def cargar_datos():
     try:
         conn = sqlite3.connect('reconstruccion_vzla.db')
@@ -57,7 +54,7 @@ def cargar_datos():
 df = cargar_datos()
 
 if not df.empty:
-    # MÉTRICAS CON ALTO CONTRASTE
+    # MÉTRICAS
     m1, m2, m3 = st.columns(3)
     total_bbls = df["capacidad_barriles"].sum()
     valor_fob = total_bbls * 75
@@ -68,30 +65,23 @@ if not df.empty:
 
     st.write("##")
 
-    # GRÁFICOS VISIBLES
+    # GRÁFICOS (Forzando tema claro en los gráficos)
     c1, c2 = st.columns(2)
     with c1:
-        fig = px.pie(df, values='capacidad_barriles', names='destino', 
-                     title="Distribución por Mercado Destino",
-                     color_discrete_sequence=px.colors.qualitative.Prism)
-        fig.update_layout(paper_bgcolor='white', font=dict(color="#1F2937"))
+        fig = px.pie(df, values='capacidad_barriles', names='destino', title="Distribución por Mercado")
+        fig.update_layout(template="plotly_white", paper_bgcolor='rgba(0,0,0,0)', font=dict(color="black"))
         st.plotly_chart(fig, use_container_width=True)
-        
     with c2:
-        fig2 = px.bar(df, x='buque_nombre', y='capacidad_barriles', 
-                      title="Capacidad por Buque",
-                      color_discrete_sequence=['#1E3A8A'])
-        fig2.update_layout(paper_bgcolor='white', plot_bgcolor='white', font=dict(color="#1F2937"))
+        fig2 = px.bar(df, x='buque_nombre', y='capacidad_barriles', title="Capacidad por Buque")
+        fig2.update_layout(template="plotly_white", paper_bgcolor='rgba(0,0,0,0)', font=dict(color="black"))
         st.plotly_chart(fig2, use_container_width=True)
 
     # TABLA
-    st.subheader("📋 Registro Maestro de Operaciones Aduaneras")
+    st.subheader("📋 Registro Maestro de Operaciones")
     st.dataframe(df, use_container_width=True)
 
 else:
-    st.error("No se pudo leer la base de datos. Verifica el archivo .db en GitHub.")
+    st.error("Error: No se encontró la base de datos 'reconstruccion_vzla.db'.")
 
-# PIE DE PÁGINA
 st.write("---")
-st.markdown("⚖️ *Operación bajo normativa de la Ley Orgánica de Aduanas de Venezuela.*")
-st.caption(f"© 2026 Desarrollado por Albert Guacaran")
+st.caption("© 2026 Desarrollado por Albert Guacaran | Cumplimiento Ley Orgánica de Aduanas")
