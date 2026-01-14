@@ -4,11 +4,14 @@ import pandas as pd
 import plotly.express as px
 from PIL import Image
 import os
+from fpdf import FPDF
+import base64
+from datetime import datetime
 
 # --- 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS CSS ---
 st.set_page_config(page_title="Terminal Logística - Albert Guacaran", layout="wide")
 
-# CSS para forzar Tema Claro (High Contrast) y corregir visualización
+# CSS para forzar Tema Claro (High Contrast) y mantener tu diseño responsivo
 st.markdown("""
     <style>
     /* Fondo Blanco Total */
@@ -29,13 +32,19 @@ st.markdown("""
     .stDataFrame { background-color: #FFFFFF !important; border: 1px solid #D1D5DB !important; }
     [data-testid="stSidebar"] { background-color: #F3F4F6 !important; border-right: 1px solid #E5E7EB; }
     
-    /* Ajuste de enlaces */
-    a { color: #1E3A8A !important; }
+    /* Botones */
+    .stButton>button {
+        background-color: #1E3A8A;
+        color: white;
+        border-radius: 5px;
+        border: none;
+    }
     </style>
     """, unsafe_allow_html=True)
 
 # --- 2. GESTIÓN DE BASE DE DATOS (AUTO-GENERACIÓN) ---
 DB_NAME = 'reconstruccion_vzla.db'
+LOGO_FILENAME = 'logo_de_albert.png'
 
 def inicializar_db_si_no_existe():
     """Crea una DB dummy si no existe para portabilidad del portafolio."""
@@ -52,7 +61,7 @@ def inicializar_db_si_no_existe():
                 estatus TEXT
             )
         ''')
-        # Datos semilla de prueba para demostración
+        # Datos semilla de prueba
         datos_prueba = [
             ('Orinoco Spirit', 'China', 2000000, '2026-01-15', 'En Tránsito'),
             ('Oil Star', 'India', 1500000, '2026-01-18', 'Cargando'),
@@ -64,10 +73,9 @@ def inicializar_db_si_no_existe():
         conn.commit()
         conn.close()
 
-# Ejecutar inicialización
 inicializar_db_si_no_existe()
 
-# --- 3. CARGA DE DATOS (OPTIMIZADA) ---
+# --- 3. CARGA DE DATOS ---
 @st.cache_data(ttl=3600)
 def cargar_datos():
     try:
@@ -81,16 +89,66 @@ def cargar_datos():
 
 df_raw = cargar_datos()
 
-# --- 4. ENCABEZADO ---
+# --- 4. FUNCIÓN PARA GENERAR PDF ---
+class PDF(FPDF):
+    def header(self):
+        # Logo
+        if os.path.exists(LOGO_FILENAME):
+            self.image(LOGO_FILENAME, 10, 8, 33)
+        self.set_font('Arial', 'B', 15)
+        # Mover a la derecha
+        self.cell(80)
+        # Título
+        self.cell(30, 10, 'Reporte de Operaciones Portuarias', 0, 0, 'C')
+        self.ln(20)
+
+    def footer(self):
+        self.set_y(-15)
+        self.set_font('Arial', 'I', 8)
+        self.cell(0, 10, f'Page {self.page_no()} - Gen. por Albert Guacaran System', 0, 0, 'C')
+
+def generar_pdf_bytes(df_export):
+    pdf = PDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    
+    # Información General
+    pdf.cell(200, 10, txt=f"Fecha de Emisión: {datetime.now().strftime('%Y-%m-%d')}", ln=True, align='L')
+    pdf.cell(200, 10, txt="Departamento: Logística y Comercio Exterior", ln=True, align='L')
+    pdf.ln(10)
+    
+    # Encabezados de Tabla
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(40, 10, "Buque", 1)
+    pdf.cell(30, 10, "Destino", 1)
+    pdf.cell(40, 10, "Capacidad (BBLS)", 1)
+    pdf.cell(35, 10, "Fecha Salida", 1)
+    pdf.cell(35, 10, "Estatus", 1)
+    pdf.ln()
+    
+    # Datos de Tabla
+    pdf.set_font("Arial", size=10)
+    for index, row in df_export.iterrows():
+        pdf.cell(40, 10, str(row['buque_nombre']), 1)
+        pdf.cell(30, 10, str(row['destino']), 1)
+        pdf.cell(40, 10, f"{row['capacidad_barriles']:,}", 1)
+        pdf.cell(35, 10, str(row['fecha_salida']), 1)
+        pdf.cell(35, 10, str(row['estatus']), 1)
+        pdf.ln()
+        
+    return pdf.output(dest='S').encode('latin-1')
+
+# --- 5. ENCABEZADO ---
 col_logo, col_titulo = st.columns([1, 5])
 
 with col_logo:
     try:
-        # Intenta cargar logo, si no hay, muestra un emoji representativo
-        img = Image.open('logo.png')
+        # AQUÍ CARGA TU LOGO PERSONAL
+        img = Image.open(LOGO_FILENAME)
         st.image(img, use_container_width=True)
     except:
-        st.markdown("<h1 style='text-align: center;'>🚢</h1>", unsafe_allow_html=True)
+        st.markdown("# ⚓")
+        st.caption("Falta logo_de_albert.png")
 
 with col_titulo:
     st.title("Sistema de Inteligencia Portuaria")
@@ -99,24 +157,21 @@ with col_titulo:
 
 st.write("---")
 
-# --- 5. LÓGICA PRINCIPAL ---
+# --- 6. INTERFAZ PRINCIPAL ---
 if not df_raw.empty:
     
-    # --- BARRA LATERAL (Sidebar) ---
+    # --- SIDEBAR & FILTROS ---
     st.sidebar.title("🛠️ Panel de Control")
-    
-    # Filtro
     st.sidebar.subheader("Filtros Operativos")
     lista_destinos = ["Todos"] + list(df_raw['destino'].unique())
     filtro_destino = st.sidebar.selectbox("Seleccionar Destino:", lista_destinos)
     
-    # Aplicar Filtro
     if filtro_destino != "Todos":
         df = df_raw[df_raw['destino'] == filtro_destino]
     else:
         df = df_raw
         
-    # --- SECCIÓN DE PERFIL (PORTAFOLIO) ---
+    # Perfil Autor
     st.sidebar.markdown("---")
     st.sidebar.markdown("### 👨‍💻 Sobre el Autor")
     st.sidebar.info(
@@ -125,16 +180,14 @@ if not df_raw.empty:
         
         *Licenciado en Comercio Internacional & Data Developer.*
         
-        Fusiono la logística aduanera con la potencia de Python y SQL para optimizar la toma de decisiones estratégicas.
+        Experto en visualización de datos logísticos y desarrollo de soluciones BI.
         """
     )
-    st.sidebar.markdown("[Ver GitHub](https://github.com/) | [Ver LinkedIn](https://linkedin.com/)")
 
-    # --- KPI METRICS ---
+    # --- MÉTRICAS KPI ---
     m1, m2, m3, m4 = st.columns(4)
-    
     total_bbls = df["capacidad_barriles"].sum()
-    valor_fob = total_bbls * 75 # Precio estimado ref
+    valor_fob = total_bbls * 75 
     n_buques = df["buque_nombre"].nunique()
     
     m1.metric("Volumen Total (BBLS)", f"{total_bbls:,.0f}")
@@ -144,77 +197,71 @@ if not df_raw.empty:
 
     st.write("##")
 
-    # --- GRÁFICOS (VISUALIZACIÓN CORREGIDA) ---
+    # --- GRÁFICOS (NEGRO PURO PARA LEGIBILIDAD) ---
     c1, c2 = st.columns(2)
     
     with c1:
-        # Gráfico de Pastel (Donut)
         fig = px.pie(df, values='capacidad_barriles', names='destino', 
                      title="Distribución Geográfica de Carga",
-                     color_discrete_sequence=px.colors.qualitative.Bold,
-                     hole=0.4)
-        
-        # AJUSTES DE COLOR NEGRO PARA VISIBILIDAD
+                     color_discrete_sequence=px.colors.qualitative.Bold, hole=0.4)
         fig.update_layout(
-            plot_bgcolor='white', 
-            paper_bgcolor='white', 
-            font_color="black",         # Texto base negro
-            title_font_color="black",   # Título negro
-            legend_title_font_color="black",
-            legend=dict(font=dict(color="black")) # Leyenda negra
+            plot_bgcolor='white', paper_bgcolor='white', 
+            font_color="black", title_font_color="black",
+            legend=dict(font=dict(color="black"))
         )
         st.plotly_chart(fig, use_container_width=True)
         
     with c2:
-        # Gráfico de Barras Horizontal
         df_sorted = df.sort_values(by="capacidad_barriles", ascending=True)
         fig2 = px.bar(df_sorted, x='capacidad_barriles', y='buque_nombre', 
                       title="Capacidad de Carga por Buque",
-                      orientation='h', 
-                      text_auto='.2s',
-                      color_discrete_sequence=['#1E3A8A']) # Azul corporativo
-        
-        # AJUSTES DE COLOR NEGRO PARA EJES Y ETIQUETAS
+                      orientation='h', text_auto='.2s',
+                      color_discrete_sequence=['#1E3A8A'])
         fig2.update_layout(
-            plot_bgcolor='white', 
-            paper_bgcolor='white', 
-            font_color="black",
-            title_font_color="black",
-            xaxis=dict(
-                title="Capacidad (Barriles)",
-                title_font=dict(color="black"),
-                tickfont=dict(color="black"), # Números eje X en negro
-                showgrid=True,
-                gridcolor='#E5E7EB'
-            ),
-            yaxis=dict(
-                title="Nombre del Buque",
-                title_font=dict(color="black"),
-                tickfont=dict(color="black")  # Nombres de buques en negro
-            )
+            plot_bgcolor='white', paper_bgcolor='white', 
+            font_color="black", title_font_color="black",
+            xaxis=dict(title_font=dict(color="black"), tickfont=dict(color="black"), showgrid=True, gridcolor='#E5E7EB'),
+            yaxis=dict(title_font=dict(color="black"), tickfont=dict(color="black"))
         )
         st.plotly_chart(fig2, use_container_width=True)
 
-    # --- TABLA DE DATOS ---
+    # --- TABLA Y EXPORTACIÓN ---
     st.markdown("### 📋 Registro Maestro de Operaciones")
-    st.dataframe(
-        df, 
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "capacidad_barriles": st.column_config.NumberColumn("Capacidad (BBLS)", format="%d"),
-            "fecha_salida": st.column_config.DateColumn("Fecha Salida", format="DD/MM/YYYY"),
-        }
-    )
+    
+    col_tabla, col_descarga = st.columns([4, 1])
+    
+    with col_tabla:
+        st.dataframe(
+            df, 
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "capacidad_barriles": st.column_config.NumberColumn("Capacidad (BBLS)", format="%d"),
+            }
+        )
+
+    with col_descarga:
+        st.write("##") # Espacio para alinear
+        # BOTÓN DE DESCARGA PDF
+        try:
+            pdf_bytes = generar_pdf_bytes(df)
+            st.download_button(
+                label="📄 Descargar PDF",
+                data=pdf_bytes,
+                file_name="Reporte_Logistica_AlbertGuacaran.pdf",
+                mime="application/pdf"
+            )
+        except Exception as e:
+            st.warning("Instala 'fpdf' para habilitar PDF.")
 
 else:
-    st.error("⚠️ Error Crítico: No hay datos disponibles en el sistema.")
+    st.error("⚠️ Error Crítico: No hay datos disponibles.")
 
 # --- PIE DE PÁGINA ---
 st.write("---")
 c_foot1, c_foot2 = st.columns([3,1])
 with c_foot1:
-    st.markdown("⚖️ *Reporte generado bajo normativas internacionales de comercio exterior.*")
+    st.markdown("⚖️ *Reporte generado bajo normativas internacionales.*")
     st.caption(f"© 2026 Desarrollado por Albert Guacaran.")
 with c_foot2:
-    st.caption("v.3.0 - Portfolio Edition")
+    st.caption("v.3.2 - PDF Export Enabled")
