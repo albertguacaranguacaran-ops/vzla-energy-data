@@ -10,46 +10,34 @@ from datetime import datetime
 # --- 1. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Terminal Logística - Albert Guacaran", layout="wide")
 
-# --- 2. CSS MAESTRO (TARJETAS + ESTILOS) ---
+# --- 2. CSS MAESTRO (ESTILOS VISUALES) ---
 st.markdown("""
     <style>
-    /* 1. FONDO BLANCO GENERAL */
+    /* 1. FONDO BLANCO GENERAL (Para toda la app) */
     .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-        background-color: #F8F9FA !important; /* Un gris muy muy claro para que las tarjetas blancas resalten */
+        background-color: #F8F9FA !important; /* Gris muy suave profesional */
     }
     
     /* 2. TEXTOS GENERALES EN NEGRO */
-    h1, h2, h3, p, span, div, label {
+    h1, h2, h3, h4, h5, h6, p, span, div, label {
         color: #000000 !important;
         font-family: 'Arial', sans-serif !important;
     }
 
-    /* --- 3. ¡AQUÍ ESTÁN LAS TARJETAS (CARDS) DE MÉTRICAS! --- */
+    /* 3. ESTILOS DE TARJETAS (CARDS) */
     div[data-testid="stMetric"] {
-        background-color: #FFFFFF !important; /* Fondo blanco de la tarjeta */
-        border: 1px solid #D1D5DB !important; /* Borde gris suave */
-        padding: 20px !important;              /* Espacio interno */
-        border-radius: 10px !important;        /* Bordes redondeados */
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important; /* Sombra suave 3D */
-        border-left: 8px solid #1E3A8A !important; /* Tira AZUL PETRÓLEO a la izquierda */
+        background-color: #FFFFFF !important;
+        border: 1px solid #D1D5DB !important;
+        padding: 20px !important;
+        border-radius: 10px !important;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+        border-left: 8px solid #1E3A8A !important;
         text-align: center !important;
     }
-    
-    /* Ajuste de los números dentro de la tarjeta */
-    [data-testid="stMetricValue"] {
-        color: #1E3A8A !important; /* Azul corporativo */
-        font-size: 32px !important;
-        font-weight: 800 !important;
-    }
-    
-    /* Ajuste del título pequeño (label) dentro de la tarjeta */
-    [data-testid="stMetricLabel"] {
-        color: #4B5563 !important; /* Gris oscuro */
-        font-size: 16px !important;
-        font-weight: bold !important;
-    }
+    [data-testid="stMetricValue"] { color: #1E3A8A !important; font-size: 32px !important; font-weight: 800 !important; }
+    [data-testid="stMetricLabel"] { color: #4B5563 !important; font-size: 16px !important; font-weight: bold !important; }
 
-    /* --- 4. SIDEBAR CON IMAGEN PETROLERA --- */
+    /* 4. SIDEBAR CON IMAGEN */
     [data-testid="stSidebar"] {
         background-image: url('https://img.freepik.com/free-photo/oil-refinery-plant-at-sunset_1150-10932.jpg');
         background-size: cover;
@@ -57,23 +45,49 @@ st.markdown("""
     }
     [data-testid="stSidebar"]::before {
         content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background-color: rgba(255, 255, 255, 0.90); /* Capa blanca para leer letras */
+        background-color: rgba(255, 255, 255, 0.90);
         z-index: 0;
     }
     [data-testid="stSidebar"] > div:nth-child(1) { position: relative; z-index: 1; }
 
-    /* --- 5. MENÚ DESPLEGABLE (FIX NEGRO) --- */
+    /* --- 5. PROTOCOLOS DE VISIBILIDAD DE MENÚ (SOLUCIÓN DROPDOWN NEGRO) --- */
+    
+    /* A. La caja cerrada */
     div[data-baseweb="select"] > div {
         background-color: #FFFFFF !important;
         border: 1px solid #000000 !important;
         color: #000000 !important;
     }
-    ul[data-baseweb="menu"] { background-color: #FFFFFF !important; }
-    li[data-baseweb="option"] { color: #000000 !important; background-color: #FFFFFF !important; }
-    li[data-baseweb="option"]:hover { background-color: #E5E7EB !important; color: #1E3A8A !important; }
+    
+    /* B. El contenedor flotante (Popover) - ESTE ES EL QUE SE VEÍA NEGRO */
+    div[data-baseweb="popover"],
+    div[data-baseweb="popover"] > div {
+        background-color: #FFFFFF !important;
+    }
+
+    /* C. La lista de opciones */
+    ul[data-baseweb="menu"] {
+        background-color: #FFFFFF !important;
+    }
+
+    /* D. Las opciones individuales */
+    li[data-baseweb="option"] {
+        background-color: #FFFFFF !important;
+        color: #000000 !important; /* Texto NEGRO */
+    }
+
+    /* E. Al pasar el mouse por una opción */
+    li[data-baseweb="option"]:hover,
+    li[data-baseweb="option"][aria-selected="true"] {
+        background-color: #E5E7EB !important; /* Gris claro */
+        color: #1E3A8A !important; /* Texto Azul */
+    }
+
+    /* F. Texto dentro del select y flecha */
+    div[data-testid="stMarkdownContainer"] p { color: #000000 !important; }
     svg { fill: #000000 !important; }
 
-    /* --- 6. BOTÓN PDF ROJO --- */
+    /* 6. BOTÓN PDF ROJO */
     div.stDownloadButton > button {
         background-color: #D32F2F !important;
         color: white !important;
@@ -84,18 +98,17 @@ st.markdown("""
     }
     div.stDownloadButton > button:hover { background-color: #B71C1C !important; }
 
-    /* --- 7. ESTILO TABLA --- */
+    /* 7. TABLAS */
     .stDataFrame { border: 1px solid #D1D5DB !important; background-color: white !important;}
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. CONFIGURACIÓN Y DATOS ---
+# --- 3. DATOS ---
 DB_NAME = 'reconstruccion_vzla.db'
 LOGO_FILENAME = 'logo_de_albert.png'
 
 @st.cache_data(ttl=3600)
 def cargar_datos():
-    # Datos simulados para garantizar que funcione al copiar y pegar
     data = {
         'buque_nombre': ['MV Liberty', 'Oil Star', 'Caribbean Queen', 'Orinoco Spirit', 'Atlantic Voyager'],
         'destino': ['Rotterdam, Netherlands', 'Louisiana, USA', 'Houston, USA', 'Louisiana, USA', 'Rotterdam, Netherlands'],
@@ -168,12 +181,13 @@ with col_titulo:
 
 st.write("---")
 
-# --- 6. CUERPO DASHBOARD ---
+# --- 6. CUERPO APP ---
 if not df_raw.empty:
     
     # SIDEBAR
     st.sidebar.title("🛠️ Panel de Control")
     st.sidebar.markdown("### Filtros Operativos")
+    
     lista_destinos = ["Todos"] + list(df_raw['destino'].unique())
     filtro_destino = st.sidebar.selectbox("Seleccionar Destino:", lista_destinos)
     
@@ -186,15 +200,12 @@ if not df_raw.empty:
     st.sidebar.markdown("### 👨‍💻 Sobre el Autor")
     st.sidebar.info("Albert Guacaran\n\nLicenciado en Comercio Internacional & Data Developer.")
 
-    # --- AQUÍ ESTÁN LAS MÉTRICAS CON ESTILO DE TARJETA ---
-    # Usamos st.columns para distribuirlas horizontalmente
+    # METRICAS (CARDS)
     m1, m2, m3, m4 = st.columns(4)
-    
     total_bbls = df["capacidad_barriles"].sum()
     valor_fob = total_bbls * 75
     n_buques = df["buque_nombre"].nunique()
     
-    # El CSS inyectado arriba convertirá esto automáticamente en tarjetas
     m1.metric("Volumen Total (BBLS)", f"{total_bbls:,.0f}")
     m2.metric("Valoración FOB (USD)", f"$ {valor_fob:,.0f}")
     m3.metric("Buques Activos", f"{n_buques}")
