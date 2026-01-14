@@ -7,24 +7,69 @@ from fpdf import FPDF
 import base64
 from datetime import datetime
 
+# --- 0. CONFIGURACIÓN AUTOMÁTICA DE TEMA (LA SOLUCIÓN DEFINITIVA) ---
+def configurar_tema_light():
+    """
+    Crea un archivo de configuración .streamlit/config.toml para FORZAR
+    el tema claro (Light Mode) nativo. Esto arregla los menús negros.
+    """
+    if not os.path.exists(".streamlit"):
+        os.makedirs(".streamlit")
+    
+    config_path = ".streamlit/config.toml"
+    
+    # Contenido que fuerza el modo claro
+    config_content = """
+[theme]
+base="light"
+primaryColor="#1E3A8A"
+backgroundColor="#FFFFFF"
+secondaryBackgroundColor="#F8F9FA"
+textColor="#000000"
+font="sans serif"
+    """
+    
+    # Solo lo escribimos si no existe o si queremos asegurar el cambio
+    if not os.path.exists(config_path):
+        with open(config_path, "w") as f:
+            f.write(config_content.strip())
+        # Opcional: Avisar al usuario
+        print(">>> TEMA CLARO CONFIGURADO. SI VES ALGO OSCURO, REINICIA LA APP.")
+
+# Ejecutamos esto ANTES de cualquier cosa
+configurar_tema_light()
+
 # --- 1. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Terminal Logística - Albert Guacaran", layout="wide")
 
-# --- 2. CSS MAESTRO (ESTILOS VISUALES) ---
+# --- 2. CSS DE REFUERZO (VISUAL) ---
 st.markdown("""
     <style>
-    /* 1. FONDO BLANCO GENERAL (Para toda la app) */
-    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-        background-color: #F8F9FA !important; /* Gris muy suave profesional */
-    }
-    
-    /* 2. TEXTOS GENERALES EN NEGRO */
-    h1, h2, h3, h4, h5, h6, p, span, div, label {
+    /* 1. TEXTOS GENERALES EN NEGRO PURO */
+    h1, h2, h3, h4, h5, h6, p, span, div, label, li {
         color: #000000 !important;
         font-family: 'Arial', sans-serif !important;
     }
-
-    /* 3. ESTILOS DE TARJETAS (CARDS) */
+    
+    /* 2. FORZAR FONDO BLANCO EN EL POPUP DEL MENÚ (Capa extra de seguridad) */
+    div[data-baseweb="popover"],
+    div[data-baseweb="menu"],
+    ul[data-baseweb="menu"] {
+        background-color: #FFFFFF !important;
+    }
+    
+    /* 3. OPCIONES DEL MENÚ (Listado) */
+    li[data-baseweb="option"] {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+    }
+    /* Al pasar el mouse por una opción */
+    li[data-baseweb="option"]:hover {
+        background-color: #E5E7EB !important;
+        color: #1E3A8A !important;
+    }
+    
+    /* 4. TARJETAS (CARDS) DE MÉTRICAS */
     div[data-testid="stMetric"] {
         background-color: #FFFFFF !important;
         border: 1px solid #D1D5DB !important;
@@ -32,12 +77,11 @@ st.markdown("""
         border-radius: 10px !important;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
         border-left: 8px solid #1E3A8A !important;
-        text-align: center !important;
     }
     [data-testid="stMetricValue"] { color: #1E3A8A !important; font-size: 32px !important; font-weight: 800 !important; }
     [data-testid="stMetricLabel"] { color: #4B5563 !important; font-size: 16px !important; font-weight: bold !important; }
 
-    /* 4. SIDEBAR CON IMAGEN */
+    /* 5. SIDEBAR */
     [data-testid="stSidebar"] {
         background-image: url('https://img.freepik.com/free-photo/oil-refinery-plant-at-sunset_1150-10932.jpg');
         background-size: cover;
@@ -50,43 +94,6 @@ st.markdown("""
     }
     [data-testid="stSidebar"] > div:nth-child(1) { position: relative; z-index: 1; }
 
-    /* --- 5. PROTOCOLOS DE VISIBILIDAD DE MENÚ (SOLUCIÓN DROPDOWN NEGRO) --- */
-    
-    /* A. La caja cerrada */
-    div[data-baseweb="select"] > div {
-        background-color: #FFFFFF !important;
-        border: 1px solid #000000 !important;
-        color: #000000 !important;
-    }
-    
-    /* B. El contenedor flotante (Popover) - ESTE ES EL QUE SE VEÍA NEGRO */
-    div[data-baseweb="popover"],
-    div[data-baseweb="popover"] > div {
-        background-color: #FFFFFF !important;
-    }
-
-    /* C. La lista de opciones */
-    ul[data-baseweb="menu"] {
-        background-color: #FFFFFF !important;
-    }
-
-    /* D. Las opciones individuales */
-    li[data-baseweb="option"] {
-        background-color: #FFFFFF !important;
-        color: #000000 !important; /* Texto NEGRO */
-    }
-
-    /* E. Al pasar el mouse por una opción */
-    li[data-baseweb="option"]:hover,
-    li[data-baseweb="option"][aria-selected="true"] {
-        background-color: #E5E7EB !important; /* Gris claro */
-        color: #1E3A8A !important; /* Texto Azul */
-    }
-
-    /* F. Texto dentro del select y flecha */
-    div[data-testid="stMarkdownContainer"] p { color: #000000 !important; }
-    svg { fill: #000000 !important; }
-
     /* 6. BOTÓN PDF ROJO */
     div.stDownloadButton > button {
         background-color: #D32F2F !important;
@@ -97,9 +104,9 @@ st.markdown("""
         width: 100%;
     }
     div.stDownloadButton > button:hover { background-color: #B71C1C !important; }
-
-    /* 7. TABLAS */
-    .stDataFrame { border: 1px solid #D1D5DB !important; background-color: white !important;}
+    
+    /* 7. TEXTO DENTRO DE LOS SELECTORES */
+    div[data-testid="stMarkdownContainer"] p { color: #000000 !important; }
     </style>
     """, unsafe_allow_html=True)
 
