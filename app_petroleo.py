@@ -2,48 +2,59 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 
-# Configuración de la página
-st.set_page_config(page_title="Vzla Energy Dashboard", layout="wide")
+# Configuración con tema claro y profesional
+st.set_page_config(page_title="Sistema de Gestión Comex - Albert Guacaran", layout="wide")
 
-st.title("📊 Monitor de Logística y Exportación Petrolera")
-st.markdown("### Reconstrucción Estratégica 2026 - Albert Guacaran")
+# Estilo CSS para forzar limpieza visual (Blanco y Gris Profesional)
+st.markdown("""
+    <style>
+    .main { background-color: #FFFFFF; }
+    .stMetric { background-color: #F8F9FA; border: 1px solid #DEE2E6; padding: 15px; border-radius: 5px; }
+    h1, h2, h3 { color: #212529; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    </style>
+    """, unsafe_allow_html=True)
 
-# Conexión a la base de datos que creamos
+# Encabezado Corporativo
+st.title("🏛️ Terminal Virtual de Exportación de Hidrocarburos")
+st.markdown(f"**Consultor Responsable:** Lic. Albert Guacaran | *Especialista en Comercio Internacional*")
+st.write("---")
+
+# Función de datos
 def cargar_datos():
     conn = sqlite3.connect('reconstruccion_vzla.db')
     df = pd.read_sql_query("SELECT * FROM logistica_exportacion", conn)
     conn.close()
     return df
 
-df_logistica = cargar_datos()
+df = cargar_datos()
 
-# --- BARRA LATERAL (Filtros de Comercio Internacional) ---
-st.sidebar.header("Filtros de Operación")
-destino_selected = st.sidebar.multiselect(
-    "Seleccione Destino:",
-    options=df_logistica["destino"].unique(),
-    default=df_logistica["destino"].unique()
-)
+# --- MARCO LEGAL VENEZOLANO (El toque de nivel) ---
+with st.expander("⚖️ Fundamentos Legales de la Operación"):
+    st.write("""
+    Esta plataforma integra los controles dispuestos en:
+    * **Ley Orgánica de Aduanas:** Validación de manifiestos y potestad aduanera.
+    * **Ley Orgánica de Hidrocarburos:** Control de volúmenes de extracción y exportación.
+    * **Convenio Cambiario N° 1:** Registro de divisas por exportación no tradicional/petrolera.
+    """)
 
-# Filtrar datos
-df_filtrado = df_logistica[df_logistica["destino"].isin(destino_selected)]
-
-# --- INDICADORES CLAVE (KPIs) ---
+# --- PANEL DE CONTROL ---
 col1, col2, col3 = st.columns(3)
-total_barriles = df_filtrado["capacidad_barriles"].sum()
-valor_total = total_barriles * 75 # Precio WTI proyectado
+total_bbls = df["capacidad_barriles"].sum()
+valor_usd = total_bbls * 75
 
-col1.metric("Total Barriles a Exportar", f"{total_barriles:,} bbls")
-col2.metric("Valor Estimado de Carga", f"$ {valor_total:,.2f}")
-col3.metric("Buques en Operación", len(df_filtrado))
+with col1:
+    st.metric("Volumen Total Declarado", f"{total_bbls:,} BBLS")
+with col2:
+    st.metric("Valor FOB Estimado", f"$ {valor_usd:,.2f}")
+with col3:
+    st.metric("Estatus de Buques", "Operativos")
 
-# --- GRÁFICOS ---
-st.write("---")
-st.subheader("Distribución de Carga por Buque y Destino")
-st.bar_chart(df_filtrado.set_index("buque_nombre")["capacidad_barriles"])
+# --- VISUALIZACIÓN ---
+st.subheader("📊 Análisis de Tráfico Marítimo")
+st.bar_chart(df.set_index("buque_nombre")["capacidad_barriles"])
 
-# --- TABLA DE DATOS INTERACTIVA ---
-st.subheader("Detalle de Logística de Aduana")
-st.dataframe(df_filtrado, use_container_width=True)
+# --- TABLA TÉCNICA ---
+st.subheader("📋 Registro de Operaciones Aduaneras")
+st.dataframe(df, use_container_width=True)
 
-st.info("Este dashboard automatiza la lectura de la base de datos SQLite y proyecta flujos de caja basados en capacidad de transporte.")
+st.caption("© 2026 - Sistema Desarrollado por Albert Guacaran para la optimización del Comercio Exterior.")
