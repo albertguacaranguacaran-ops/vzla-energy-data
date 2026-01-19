@@ -11,7 +11,7 @@ from datetime import datetime
 def configurar_tema_light():
     """
     Crea un archivo de configuración .streamlit/config.toml para FORZAR
-    el tema claro (Light Mode) nativo. Esto arregla los menús negros.
+    el tema claro (Light Mode) nativo.
     """
     if not os.path.exists(".streamlit"):
         os.makedirs(".streamlit")
@@ -29,12 +29,9 @@ textColor="#000000"
 font="sans serif"
     """
     
-    # Solo lo escribimos si no existe o si queremos asegurar el cambio
     if not os.path.exists(config_path):
         with open(config_path, "w") as f:
             f.write(config_content.strip())
-        # Opcional: Avisar al usuario
-        print(">>> TEMA CLARO CONFIGURADO. SI VES ALGO OSCURO, REINICIA LA APP.")
 
 # Ejecutamos esto ANTES de cualquier cosa
 configurar_tema_light()
@@ -42,28 +39,36 @@ configurar_tema_light()
 # --- 1. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Terminal Logística - Albert Guacaran", layout="wide")
 
-# --- 2. CSS DE REFUERZO (VISUAL) ---
+# --- 2. CSS DE REFUERZO (VISUAL + FONDO PUERTO) ---
 st.markdown("""
     <style>
+    /* 0. FONDO DE PUERTO PETROLERO (Con capa blanca para legibilidad) */
+    .stApp {
+        /* Capa blanca al 85% sobre la foto del puerto */
+        background-image: linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)), url('https://images.unsplash.com/photo-1623945248792-581333ba3570?q=80&w=2070&auto=format&fit=crop');
+        background-size: cover;
+        background-attachment: fixed;
+        background-position: center center;
+    }
+
     /* 1. TEXTOS GENERALES EN NEGRO PURO */
-    h1, h2, h3, h4, h5, h6, p, span, div, label, li {
+    h1, h2, h3, h4, h5, h6, p, span, div, label, li, a {
         color: #000000 !important;
         font-family: 'Arial', sans-serif !important;
     }
     
-    /* 2. FORZAR FONDO BLANCO EN EL POPUP DEL MENÚ (Capa extra de seguridad) */
+    /* 2. FORZAR FONDO BLANCO EN EL POPUP DEL MENÚ */
     div[data-baseweb="popover"],
     div[data-baseweb="menu"],
     ul[data-baseweb="menu"] {
         background-color: #FFFFFF !important;
     }
     
-    /* 3. OPCIONES DEL MENÚ (Listado) */
+    /* 3. OPCIONES DEL MENÚ */
     li[data-baseweb="option"] {
         background-color: #FFFFFF !important;
         color: #000000 !important;
     }
-    /* Al pasar el mouse por una opción */
     li[data-baseweb="option"]:hover {
         background-color: #E5E7EB !important;
         color: #1E3A8A !important;
@@ -71,7 +76,7 @@ st.markdown("""
     
     /* 4. TARJETAS (CARDS) DE MÉTRICAS */
     div[data-testid="stMetric"] {
-        background-color: #FFFFFF !important;
+        background-color: rgba(255, 255, 255, 0.95) !important;
         border: 1px solid #D1D5DB !important;
         padding: 20px !important;
         border-radius: 10px !important;
@@ -81,7 +86,7 @@ st.markdown("""
     [data-testid="stMetricValue"] { color: #1E3A8A !important; font-size: 32px !important; font-weight: 800 !important; }
     [data-testid="stMetricLabel"] { color: #4B5563 !important; font-size: 16px !important; font-weight: bold !important; }
 
-    /* 5. SIDEBAR */
+    /* 5. SIDEBAR (Con imagen petrolera también) */
     [data-testid="stSidebar"] {
         background-image: url('https://img.freepik.com/free-photo/oil-refinery-plant-at-sunset_1150-10932.jpg');
         background-size: cover;
@@ -89,7 +94,7 @@ st.markdown("""
     }
     [data-testid="stSidebar"]::before {
         content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background-color: rgba(255, 255, 255, 0.90);
+        background-color: rgba(255, 255, 255, 0.92);
         z-index: 0;
     }
     [data-testid="stSidebar"] > div:nth-child(1) { position: relative; z-index: 1; }
@@ -102,16 +107,21 @@ st.markdown("""
         padding: 10px 20px !important;
         font-weight: bold !important;
         width: 100%;
+        border: none !important;
     }
     div.stDownloadButton > button:hover { background-color: #B71C1C !important; }
     
     /* 7. TEXTO DENTRO DE LOS SELECTORES */
     div[data-testid="stMarkdownContainer"] p { color: #000000 !important; }
+
+    /* 8. FONDO TRANSPARENTE PARA LOS GRÁFICOS */
+    .js-plotly-plot .plotly .main-svg {
+        background: rgba(255,255,255,0.0) !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
 # --- 3. DATOS ---
-DB_NAME = 'reconstruccion_vzla.db'
 LOGO_FILENAME = 'logo_de_albert.png'
 
 @st.cache_data(ttl=3600)
@@ -223,22 +233,31 @@ if not df_raw.empty:
     # GRÁFICOS
     c1, c2 = st.columns(2)
     with c1:
+        # Pie chart con fondo transparente
         fig = px.pie(df, values='capacidad_barriles', names='destino', 
                      title="Distribución Geográfica",
                      color_discrete_sequence=px.colors.qualitative.Bold, hole=0.4)
-        fig.update_layout(plot_bgcolor='white', paper_bgcolor='white', 
-                          font_color="black", title_font_color="black",
-                          legend=dict(font=dict(color="black")))
+        fig.update_layout(
+            plot_bgcolor='rgba(0,0,0,0)', 
+            paper_bgcolor='rgba(255,255,255,0.6)', # Fondo semitransparente para el gráfico
+            font_color="black", 
+            title_font_color="black",
+            legend=dict(font=dict(color="black"))
+        )
         st.plotly_chart(fig, use_container_width=True)
     with c2:
         df_sorted = df.sort_values(by="capacidad_barriles", ascending=True)
         fig2 = px.bar(df_sorted, x='capacidad_barriles', y='buque_nombre', 
                       title="Capacidad por Buque", orientation='h', text_auto='.2s',
                       color_discrete_sequence=['#1E3A8A'])
-        fig2.update_layout(plot_bgcolor='white', paper_bgcolor='white', 
-                           font_color="black", title_font_color="black",
-                           xaxis=dict(title_font=dict(color="black"), tickfont=dict(color="black")),
-                           yaxis=dict(title_font=dict(color="black"), tickfont=dict(color="black")))
+        fig2.update_layout(
+            plot_bgcolor='rgba(0,0,0,0)', 
+            paper_bgcolor='rgba(255,255,255,0.6)', # Fondo semitransparente para el gráfico
+            font_color="black", 
+            title_font_color="black",
+            xaxis=dict(title_font=dict(color="black"), tickfont=dict(color="black")),
+            yaxis=dict(title_font=dict(color="black"), tickfont=dict(color="black"))
+        )
         st.plotly_chart(fig2, use_container_width=True)
 
     # TABLA Y PDF
@@ -259,3 +278,4 @@ else:
 
 st.write("---")
 st.caption("© 2026 Desarrollado por Albert Guacaran.")
+
